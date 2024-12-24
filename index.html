@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Map Game</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 80vh;
+            margin: 20px auto;
+            border: 2px solid #ccc;
+        }
+        #info {
+            text-align: center;
+            margin: 10px;
+        }
+        #usernameInput {
+            margin: 10px auto;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Multiplayer Map Game</h1>
+        <div id="usernameInput">
+            <input type="text" id="username" placeholder="Enter your username" required>
+            <button onclick="joinGame()">Join Game</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        const socket = io();
+        let map, marker;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([37.0902, -95.7129], 4); // Center on North America
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.on('click', onMapClick);
+        }
+
+        // Join game
+        function joinGame() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                socket.emit('joinGame', username);
+                document.getElementById('usernameInput').style.display = 'none';
+            } else {
+                alert('Please enter a username!');
+            }
+        }
+
+        // Handle map click
+        function onMapClick(e) {
+            const { lat, lng } = e.latlng;
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([lat, lng]).addTo(map);
+            socket.emit('guessLocation', { lat, lng });
+        }
+
+        // Handle events from server
+        socket.on('updatePlayers', (players) => {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Players: ' + Object.values(players).map(p => p.username).join(', ');
+        });
+
+        socket.on('roundResult', ({ distance, targetLocation }) => {
+            alert(`You were ${distance.toFixed(2)} miles away from ${targetLocation.name}!`);
+        });
+
+        socket.on('gameOver', (player) => {
+            alert(`Game Over! Your total mileage: ${player.totalMiles.toFixed(2)} miles.`);
+        });
+
+        socket.on('gameFull', () => {
+            alert('Game is full. Try again later!');
+        });
+
+        // Initialize map on page load
+        window.onload = initMap;
+    </script>
+</body>
+</html>
