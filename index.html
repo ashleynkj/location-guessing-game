@@ -49,8 +49,8 @@
         function initMap() {
             map = L.map('map').setView([37.0902, -95.7129], 4); // Center on North America
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://carto.com/">Carto</a>'
             }).addTo(map);
 
             map.on('click', onMapClick);
